@@ -62,6 +62,12 @@ class InfluencerManager:
 
     def create_influencer(self, name, niche, personality, target_audience):
         try:
+            # Ensure target_audience is a list
+            if target_audience is None:
+                target_audience = ["Millennials"]
+            elif isinstance(target_audience, str):
+                target_audience = [target_audience]
+
             influencer = {
                 "id": len(self.influencers) + 1,
                 "name": name,
@@ -190,7 +196,13 @@ def create_influencer_page(manager):
             else:
                 with st.spinner("Creating your AI influencer..."):
                     time.sleep(2)
-                    influencer = manager.create_influencer(name, niche, personality, target_audience)
+                    # FIXED: Pass all required parameters including target_audience
+                    influencer = manager.create_influencer(
+                        name=name,
+                        niche=niche,
+                        personality=personality,
+                        target_audience=target_audience
+                    )
 
                     if influencer:
                         st.success(f"✅ {name} created successfully!")
