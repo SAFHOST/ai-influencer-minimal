@@ -1,9 +1,6 @@
 import streamlit as st
-import json
 import time
 import random
-from datetime import datetime, timedelta
-import os
 
 # Page configuration
 st.set_page_config(
@@ -39,82 +36,47 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-class InfluencerManager:
-    def __init__(self):
-        self.influencers = self.load_data()
+# Simple session state to store influencers
+if 'influencers' not in st.session_state:
+    st.session_state.influencers = []
 
-    def load_data(self):
-        try:
-            if os.path.exists('data.json'):
-                with open('data.json', 'r') as f:
-                    return json.load(f)
-        except:
-            return []
+def create_influencer_simple(name, niche, personality):
+    """Super simple influencer creation without file operations"""
+    influencer = {
+        "id": len(st.session_state.influencers) + 1,
+        "name": name,
+        "niche": niche,
+        "personality": personality,
+        "followers": random.randint(10000, 50000),
+        "engagement": round(random.uniform(3.5, 8.2), 1),
+        "monthly_earnings": random.randint(2000, 8000),
+        "content_types": get_content_types(niche),
+        "target_brands": get_target_brands(niche)
+    }
+    return influencer
 
-    def save_data(self):
-        try:
-            with open('data.json', 'w') as f:
-                json.dump(self.influencers, f, indent=2)
-            return True
-        except Exception as e:
-            st.error(f"Save error: {e}")
-            return False
+def get_content_types(niche):
+    content_map = {
+        "fashion": ["OOTD", "Style Guides", "Brand Reviews", "Trend Reports"],
+        "tech": ["Product Reviews", "Tutorials", "Tech News", "Unboxing"],
+        "fitness": ["Workouts", "Nutrition Tips", "Progress Updates", "Motivation"],
+        "lifestyle": ["Daily Routines", "Product Reviews", "Travel", "Home Decor"],
+        "business": ["Entrepreneurship Tips", "Case Studies", "Tool Reviews", "Strategies"]
+    }
+    return content_map.get(niche, content_map["lifestyle"])
 
-    def create_influencer(self, name, niche, personality, target_audience):
-        try:
-            # Ensure target_audience is a list
-            if target_audience is None:
-                target_audience = ["Millennials"]
-            elif isinstance(target_audience, str):
-                target_audience = [target_audience]
-
-            influencer = {
-                "id": len(self.influencers) + 1,
-                "name": name,
-                "niche": niche,
-                "personality": personality,
-                "target_audience": target_audience,
-                "created_date": datetime.now().isoformat(),
-                "followers": random.randint(10000, 50000),
-                "engagement": round(random.uniform(3.5, 8.2), 1),
-                "monthly_earnings": random.randint(2000, 8000),
-                "content_types": self.get_content_types(niche),
-                "target_brands": self.get_target_brands(niche)
-            }
-
-            self.influencers.append(influencer)
-            if self.save_data():
-                return influencer
-            else:
-                return None
-        except Exception as e:
-            st.error(f"Creation error: {e}")
-            return None
-
-    def get_content_types(self, niche):
-        content_map = {
-            "fashion": ["OOTD", "Style Guides", "Brand Reviews", "Trend Reports"],
-            "tech": ["Product Reviews", "Tutorials", "Tech News", "Unboxing"],
-            "fitness": ["Workouts", "Nutrition Tips", "Progress Updates", "Motivation"],
-            "lifestyle": ["Daily Routines", "Product Reviews", "Travel", "Home Decor"],
-            "business": ["Entrepreneurship Tips", "Case Studies", "Tool Reviews", "Strategies"]
-        }
-        return content_map.get(niche, content_map["lifestyle"])
-
-    def get_target_brands(self, niche):
-        brand_map = {
-            "fashion": ["Nike", "Zara", "H&M", "Fashion Nova"],
-            "tech": ["Apple", "Samsung", "Google", "Microsoft"],
-            "fitness": ["Nike", "Gymshark", "MyProtein", "Peloton"],
-            "lifestyle": ["Amazon", "Target", "IKEA", "Airbnb"],
-            "business": ["Shopify", "HubSpot", "Salesforce", "Zoom"]
-        }
-        return brand_map.get(niche, brand_map["lifestyle"])
+def get_target_brands(niche):
+    brand_map = {
+        "fashion": ["Nike", "Zara", "H&M", "Fashion Nova"],
+        "tech": ["Apple", "Samsung", "Google", "Microsoft"],
+        "fitness": ["Nike", "Gymshark", "MyProtein", "Peloton"],
+        "lifestyle": ["Amazon", "Target", "IKEA", "Airbnb"],
+        "business": ["Shopify", "HubSpot", "Salesforce", "Zoom"]
+    }
+    return brand_map.get(niche, brand_map["lifestyle"])
 
 def main():
     st.markdown('<div class="main-header">🚀 AI INFLUENCER EMPIRE</div>', unsafe_allow_html=True)
-
-    manager = InfluencerManager()
 
     # Sidebar navigation
     st.sidebar.title("🎯 Navigation")
@@ -126,30 +88,30 @@ def main():
     ])
 
     if page == "🏠 Dashboard":
-        show_dashboard(manager)
+        show_dashboard()
     elif page == "👑 Create Influencer":
-        create_influencer_page(manager)
+        create_influencer_page()
     elif page == "💰 Revenue":
-        show_revenue_page(manager)
+        show_revenue_page()
     elif page == "🚀 Quick Start":
         show_quick_start()
 
-def show_dashboard(manager):
+def show_dashboard():
     st.header("📊 Dashboard Overview")
 
-    if not manager.influencers:
+    if not st.session_state.influencers:
         st.info("🎯 Create your first AI influencer to start your empire!")
         return
 
     # Metrics
     col1, col2, col3, col4 = st.columns(4)
 
-    total_followers = sum(inf["followers"] for inf in manager.influencers)
-    total_engagement = sum(inf["engagement"] for inf in manager.influencers) / len(manager.influencers)
-    total_revenue = sum(inf["monthly_earnings"] for inf in manager.influencers)
+    total_followers = sum(inf["followers"] for inf in st.session_state.influencers)
+    total_engagement = sum(inf["engagement"] for inf in st.session_state.influencers) / len(st.session_state.influencers)
+    total_revenue = sum(inf["monthly_earnings"] for inf in st.session_state.influencers)
 
     with col1:
-        st.metric("Total Influencers", len(manager.influencers))
+        st.metric("Total Influencers", len(st.session_state.influencers))
     with col2:
         st.metric("Total Followers", f"{total_followers:,}")
     with col3:
@@ -159,7 +121,7 @@ def show_dashboard(manager):
 
     # Influencer cards
     st.subheader("👑 Your AI Influencers")
-    for influencer in manager.influencers:
+    for influencer in st.session_state.influencers:
         with st.container():
             st.markdown(f"""
             <div class="card">
@@ -172,7 +134,7 @@ def show_dashboard(manager):
             </div>
             """, unsafe_allow_html=True)
 
-def create_influencer_page(manager):
+def create_influencer_page():
     st.header("👑 Create AI Influencer")
 
     with st.form("influencer_form"):
@@ -184,54 +146,45 @@ def create_influencer_page(manager):
 
         with col2:
             personality = st.selectbox("Personality", ["sophisticated", "energetic", "authentic", "luxury", "relatable"])
-            target_audience = st.multiselect("Target Audience", ["Gen Z", "Millennials", "Professionals", "Students"], default=["Millennials"])
 
         submitted = st.form_submit_button("🚀 Create AI Influencer", type="primary")
 
         if submitted:
             if not name:
                 st.error("❌ Please enter an influencer name!")
-            elif not target_audience:
-                st.error("❌ Please select at least one target audience!")
             else:
                 with st.spinner("Creating your AI influencer..."):
                     time.sleep(2)
-                    # FIXED: Pass all required parameters including target_audience
-                    influencer = manager.create_influencer(
-                        name=name,
-                        niche=niche,
-                        personality=personality,
-                        target_audience=target_audience
-                    )
 
-                    if influencer:
-                        st.success(f"✅ {name} created successfully!")
+                    # SIMPLE CREATION - No file operations
+                    influencer = create_influencer_simple(name, niche, personality)
+                    st.session_state.influencers.append(influencer)
 
-                        st.markdown(f"""
-                        <div class="success-box">
-                            <h3>🎉 Ready to Monetize!</h3>
-                            <p><strong>{name}</strong> is now active in the {niche} niche with {influencer['followers']:,} followers.</p>
-                            <p><strong>Content Types:</strong> {', '.join(influencer['content_types'])}</p>
-                            <p><strong>Target Brands:</strong> {', '.join(influencer['target_brands'])}</p>
-                            <p><strong>Monthly Revenue Potential:</strong> ${influencer['monthly_earnings']:,}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                    st.success(f"✅ {name} created successfully!")
 
-                        st.balloons()
-                    else:
-                        st.error("❌ Failed to create influencer. Please try again.")
+                    st.markdown(f"""
+                    <div class="success-box">
+                        <h3>🎉 Ready to Monetize!</h3>
+                        <p><strong>{name}</strong> is now active in the {niche} niche with {influencer['followers']:,} followers.</p>
+                        <p><strong>Content Types:</strong> {', '.join(influencer['content_types'])}</p>
+                        <p><strong>Target Brands:</strong> {', '.join(influencer['target_brands'])}</p>
+                        <p><strong>Monthly Revenue Potential:</strong> ${influencer['monthly_earnings']:,}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-def show_revenue_page(manager):
+                    st.balloons()
+
+def show_revenue_page():
     st.header("💰 Revenue Projections")
 
-    if not manager.influencers:
+    if not st.session_state.influencers:
         st.info("Create influencers to see revenue projections!")
         return
 
     total_monthly = 0
     total_yearly = 0
 
-    for influencer in manager.influencers:
+    for influencer in st.session_state.influencers:
         st.subheader(f"💎 {influencer['name']}")
 
         col1, col2, col3 = st.columns(3)
